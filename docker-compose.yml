@@ -12,6 +12,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile.dev
+    user: "${UID}:${GID}"
     command: bundle exec rails s -b '0.0.0.0'
     volumes:
       - .:/rails
@@ -24,6 +25,8 @@ services:
       DATABASE_USER: postgres
       DATABASE_PASSWORD: password
       DATABASE_NAME: template_development
+      UID: ${UID}
+      GID: ${GID}
 
 volumes:
   postgres_data:
