@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   db:
     image: postgres:13
@@ -12,10 +14,13 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile.dev
-    user: "${UID}:${GID}"
+      args:
+        UID: ${USER_ID:-1000}
+        GID: ${GROUP_ID:-1000}
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     command: bundle exec rails s -b '0.0.0.0'
     volumes:
-      - .:/rails
+      - .:/rails:cached
     ports:
       - "3000:3000"
     depends_on:
@@ -25,8 +30,6 @@ services:
       DATABASE_USER: postgres
       DATABASE_PASSWORD: password
       DATABASE_NAME: template_development
-      UID: ${UID}
-      GID: ${GID}
 
 volumes:
   postgres_data:
