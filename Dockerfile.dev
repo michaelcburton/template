@@ -8,21 +8,25 @@ ENV RACK_ENV=development
 # Install dependencies
 RUN apt-get update -qq && apt-get install -y nodejs postgresql-client nano libvips
 
-# Set the working directory
+# Set working directory
 WORKDIR /rails
 
-# Create a non-root user matching the local UID/GID
+# Create a non-root user matching local UID/GID
 ARG UID=1000
 ARG GID=1000
-RUN groupadd -g $GID rails && useradd -m -u $UID -g $GID -s /bin/bash -g rails rails
 
-# Change ownership to the newly created user
-RUN chown -R rails:rails /rails
+RUN groupadd -g $GID rails && useradd -m -u $UID -g $GID -s /bin/bash rails
 
-# Switch to the non-root user
-USER rails
+# Change ownership before switching users
+RUN mkdir -p /rails/tmp/cache/assets/sprockets \
+    /rails/tmp/pids \
+    /rails/tmp/sockets \
+    /rails/log \
+    /rails/storage && \
+    chown -R rails:rails /rails/tmp /rails/log /rails/storage && \
+    chmod -R 777 /rails/tmp /rails/log /rails/storage
 
-# Copy the Gemfile and Gemfile.lock
+# Copy the Gemfile first (for caching)
 COPY --chown=rails:rails Gemfile Gemfile.lock /rails/
 
 # Install the gem dependencies
@@ -31,9 +35,8 @@ RUN bundle install
 # Copy the rest of the application code
 COPY --chown=rails:rails . /rails
 
-# Ensure writable directories
-RUN mkdir -p /rails/tmp /rails/log /rails/storage && \
-    chown -R rails:rails /rails/tmp /rails/log /rails/storage
+# Switch to the non-root user
+USER rails
 
 # Expose port 3000
 EXPOSE 3000
